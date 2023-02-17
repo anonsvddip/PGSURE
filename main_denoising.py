@@ -19,26 +19,21 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 GT_img = './baby.png'
 
-# scenarios = [5]
-# scenarios = [6]
-scenarios = [8]
+scenarios = [1]
 print('Processing ' + GT_img[:-4])
 
 I = Image.open(GT_img).resize((64, 64))
 x = torchvision.transforms.ToTensor()(I).unsqueeze(0).to(device)
 
 for scenario in scenarios:
-    h, sig, P_eps, __ = my_utils.get_blur_model(scenario)
-    h = h / h.sum()
-    h = h.to(device)
+    sig = my_utils.get_noise_model(scenario)
 
     with torch.no_grad():
         w = torch.randn_like(x) * sig
-        H = my_utils.fft_torch(h, (x.shape[2], x.shape[3]))
-        y = my_utils.fft_Filter_(x, H).real + w
+        y = x + w
 
     input_depth = x.shape[1]
-    suffix = f'_deblur_scenario_{scenario}_pGSURE'
+    suffix = f'_denoise_scenario_{scenario}_pGSURE'
 
     pad = 'circular'
 
@@ -55,20 +50,20 @@ for scenario in scenarios:
     net = torch.nn.DataParallel(net)
     ###################################################################################################################
 
-    pGSURE = SURE.pGSURE_blur(h, y, sig ** 2, P_eps=P_eps)
+    pGSURE = SURE.pGSURE_denoise(y, sig ** 2)
 
     x_hat_best = None
     min_loss = np.inf
 
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-2)
 
-    writer = SummaryWriter(log_dir='deblurring')
+    writer = SummaryWriter(log_dir='denoising')
 
     for i in range(10000):
         optimizer.zero_grad()
 
-        loss = pGSURE.l_pGSURE_BP(net)
-        # loss = pGSURE.l_standard_DIP(net)
+        # loss = pGSURE.l_pGSURE(net)
+        loss = pGSURE.l_standard_DIP(net)
 
         loss.backward()
         optimizer.step()

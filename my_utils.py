@@ -171,6 +171,12 @@ def zero_SV(H, eps):
     return H
 
 
+def get_noise_model(scenario):
+    if scenario == 1:
+        sigma = 12.75
+    return sigma / 255.0
+
+
 def get_blur_model(scenario):
     if scenario == 1:
         f = lambda x, y: 1 / (1 + x ** 2 + y ** 2)
@@ -201,12 +207,12 @@ def get_blur_model(scenario):
         P_eps = 1e-1
         ML_eps = P_eps
     elif scenario == 5:
-        h = get_gauss_flt((15, 15), 1.6)
+        h = get_gauss_flt(15, 1.6)
         sigma = 2
         P_eps = 5e-2
         ML_eps = P_eps
     elif scenario == 6:
-        h = get_gauss_flt((15, 15), 0.4)
+        h = get_gauss_flt(15, 0.4)
         sigma = 8
         P_eps = 0
         ML_eps = P_eps
@@ -217,6 +223,11 @@ def get_blur_model(scenario):
         h = torch.tensor(h).float().unsqueeze(0).unsqueeze(0)
         sigma = 10
         P_eps = 1e-2
+        ML_eps = P_eps
+    elif scenario == 8:
+        h = get_gauss_flt(15, 0.4)
+        sigma = 2
+        P_eps = 0
         ML_eps = P_eps
 
     return h, sigma / 255.0, P_eps, ML_eps

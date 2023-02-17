@@ -58,7 +58,7 @@ class pGSURE_blur():
             Ht = fft_np(my_utils.flip_np(h_np), s=(y.shape[2], y.shape[3]))
             Ht = zero_SV(Ht, P_eps)
 
-            HtH_dag = dagger(Ht * H)
+            HtH_dag = dagger(torch.from_numpy(Ht * H)).numpy()
             Ht_HtH_dag_H_np = Ht * HtH_dag * H
             Ht_HtH_dag_H = torch.tensor(np.imag(Ht_HtH_dag_H_np)).float().cuda()
 
@@ -66,7 +66,7 @@ class pGSURE_blur():
 
             u = self.Ht(y)
 
-            HtH_dag = dagger(Ht * H)
+            HtH_dag = dagger(torch.from_numpy(Ht * H)).numpy()
             HtH_dag_Ht_np = HtH_dag * Ht
             HtH_dag_Ht = torch.tensor(HtH_dag_Ht_np).float().cuda()
             self.HtH_dag_Ht = lambda I: my_utils.fft_Filter_(I, HtH_dag_Ht).real
@@ -74,7 +74,8 @@ class pGSURE_blur():
             self.fu = None
             self.div = None
             self.u = u.repeat(torch.cuda.device_count(), 1, 1, 1)
-            self.eps = 1e-6
+            # self.eps = 1e-6
+            self.eps = 1e-3
             self.GT = GT
             self.c1, self.c2, self.c3, self.c4 = None, None, None, None
 
@@ -117,6 +118,14 @@ class pGSURE_blur():
 
         return eta
 
+    def l_standard_DIP(self, f):
+        self.fu = f(self.u)
+        LS = self.H(self.fu) - self.y
+
+        eta = torch.mean(LS**2)
+
+        return eta
+
 
 class pGSURE_denoise():
     def __init__(self, y, sig2=1, GT=None):
@@ -148,6 +157,14 @@ class pGSURE_denoise():
     def l_pGSURE(self, f):
         self.fu = f(self.u[0:1, :])
         return torch.mean((self.y - self.fu) ** 2) + 2 * self.sig2 * self.div_approx(f)
+
+    def l_standard_DIP(self, f):
+        self.fu = f(self.u)
+        LS = self.fu - self.y
+
+        eta = torch.mean(LS**2)
+
+        return eta
 
 
 class pGSURE_SR():
