@@ -6,6 +6,9 @@ paths = ['denoising', 'deblurring_1_6', 'deblurring_0_4', 'deblurring_0_4_high_n
 titles = ['Denoising ($\sigma_{noise}=0.05$)', 'Deblurring ($\sigma_{blur}=1.6$, $\sigma_{noise}=0.0078$)', 'Deblurring ($\sigma_{blur}=0.4$, $\sigma_{noise}=0.0078$)', 'Deblurring ($\sigma_{blur}=0.4$, $\sigma_{noise}=0.0314$)']
 ylims = [(None, None), (15., None), (17.5, None), (22.5, None)]
 
+image = 'baby'
+# image = 'lotus'
+
 def load_psnrs(path, filepath):
     psnrs = pd.read_csv(os.path.join(path, filepath))
     return psnrs['Step'].to_numpy(), psnrs['Value'].to_numpy()
@@ -13,11 +16,11 @@ def load_psnrs(path, filepath):
 fig, axs = plt.subplots(2, 2, figsize=(16, 8), gridspec_kw={'wspace': 0.1})
 
 for i, (ax, path, title, ylim) in enumerate(zip(axs.T.flat, paths, titles, ylims)):
-    dip_steps, dip_psnrs = load_psnrs(path, 'dip.csv')
-    dip_sure_steps, dip_sure_psnrs = load_psnrs(path, 'dip_sure.csv')
+    dip_steps, dip_psnrs = load_psnrs(os.path.join(path, image), 'dip.csv')
+    dip_sure_steps, dip_sure_psnrs = load_psnrs(os.path.join(path, image), 'dip_sure.csv')
 
-    ax.plot(dip_steps, dip_psnrs, label='DIP', color='blue')
-    ax.plot(dip_sure_steps, dip_sure_psnrs, label='SURE DIP', color='orange')
+    ax.plot(dip_steps, dip_psnrs, label='DIP-LS', color='blue')
+    ax.plot(dip_sure_steps, dip_sure_psnrs, label='DIP-SURE', color='orange')
     if i in [0, 2]:
         ax.get_xaxis().set_ticklabels([])
     if i in [1, 3]:
@@ -30,4 +33,4 @@ for i, (ax, path, title, ylim) in enumerate(zip(axs.T.flat, paths, titles, ylims
 
 axs.flatten()[0].legend()
 
-fig.savefig('plot_sure_vs_dip.png', bbox_inches='tight', pad_inches=0.)
+fig.savefig(f'plot_sure_vs_dip_{image}.png', bbox_inches='tight', pad_inches=0.)

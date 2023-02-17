@@ -18,6 +18,7 @@ torch.backends.cudnn.benchmark = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 GT_img = './baby.png'
+# GT_img = './lotus128.png'
 
 scenarios = [1]
 print('Processing ' + GT_img[:-4])
